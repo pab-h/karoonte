@@ -8,11 +8,14 @@
 #include <freertos/queue.h>
 #include <freertos/semphr.h>
 
-#include "app/env.hpp"
 #include "app/globals/semaphore/semaphore.hpp"
 #include "app/globals/events/events.hpp"
 
+#include "connection/mqtt/mqtt.hpp"
+#include "app/env.hpp" 
+
 using namespace app::globals;
+using namespace connection;
 
 namespace connection::tasks {
 
@@ -28,8 +31,6 @@ namespace connection::tasks {
 
                 xSemaphoreGive(semaphore::get_wifi_mutex());
                 vTaskDelay(pdMS_TO_TICKS(1000));
-
-                Serial.println("[CONN] WiFi still connected");
 
                 continue;
 
@@ -71,6 +72,59 @@ namespace connection::tasks {
             );
 
             xSemaphoreGive(semaphore::get_wifi_mutex());
+
+        }
+
+    }
+
+    void keep_mqtt_alive(void* pvParameters) {
+
+        PubSubClient* client = connection::mqtt::get_client();
+
+        while (true) {
+
+            xEventGroupWaitBits(
+                events::get_system_events(),
+                IS_WIFI_ALIVE_BIT,
+                pdFALSE,
+                pdTRUE,
+                portMAX_DELAY
+            );
+
+            xSemaphoreTake(semaphore::get_wifi_mutex(), portMAX_DELAY);
+
+            if (!client->connected()) {
+
+                xEventGroupClearBits(
+                    events::get_system_events(),
+                    IS_MQTT_ALIVE_BIT
+                );
+
+                if (!client->connect(MQTT_CLIENT_ID)) {
+
+                    Serial.println("[CONN] MQTT failed");
+
+                    xSemaphoreGive(semaphore::get_wifi_mutex());
+                    vTaskDelay(pdMS_TO_TICKS(1000));
+
+                    continue;
+
+                }
+
+                Serial.println("[CONN] MQTT connected");
+
+                xEventGroupSetBits(
+                    events::get_system_events(),
+                    IS_MQTT_ALIVE_BIT
+                );
+
+            }
+
+            client->loop();
+
+            xSemaphoreGive(semaphore::get_wifi_mutex());
+
+            vTaskDelay(pdMS_TO_TICKS(50));
 
         }
 
