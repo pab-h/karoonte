@@ -19,6 +19,44 @@ using namespace connection;
 
 namespace connection::tasks {
 
+    void keep_subscription(void* pvParameters) {
+
+        PubSubClient* client = mqtt::get_client();
+
+        while (true) {
+
+            xEventGroupWaitBits(
+                events::get_system_events(),
+                IS_CONNECTED_BITS | IS_MQTT_TOPIC_NOT_SUBSCRIBED_BIT,
+                pdFALSE,
+                pdTRUE,
+                portMAX_DELAY
+            );
+
+            xSemaphoreTake(
+                semaphore::get_wifi_mutex(),
+                portMAX_DELAY
+            );
+
+            client->subscribe(MQTT_RESULT_TOPIC);
+            client->subscribe(MQTT_STATUS_TOPIC);
+
+            Serial.printf("[CONN] Subscribed on %s\n", MQTT_RESULT_TOPIC);
+            Serial.printf("[CONN] Subscribed on %s\n", MQTT_STATUS_TOPIC);
+
+            xSemaphoreGive(
+                semaphore::get_wifi_mutex()
+            );
+
+            xEventGroupClearBits(
+                events::get_system_events(),
+                IS_MQTT_TOPIC_NOT_SUBSCRIBED_BIT
+            );
+
+        }
+
+    }
+
     void keep_wifi_alive(void* pvParameters) {
 
         unsigned long start_attempt_time;
@@ -79,7 +117,7 @@ namespace connection::tasks {
 
     void keep_mqtt_alive(void* pvParameters) {
 
-        PubSubClient* client = connection::mqtt::get_client();
+        PubSubClient* client = mqtt::get_client();
 
         while (true) {
 
@@ -98,6 +136,11 @@ namespace connection::tasks {
                 xEventGroupClearBits(
                     events::get_system_events(),
                     IS_MQTT_ALIVE_BIT
+                );
+
+                xEventGroupSetBits(
+                    events::get_system_events(),
+                    IS_MQTT_TOPIC_NOT_SUBSCRIBED_BIT
                 );
 
                 if (!client->connect(MQTT_CLIENT_ID)) {

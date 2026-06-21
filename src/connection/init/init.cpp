@@ -30,6 +30,15 @@ namespace connection {
             NULL
         );
 
+        xTaskCreate(
+            tasks::keep_subscription,
+            "Keep subscription",
+            4096,
+            NULL,
+            1,
+            NULL
+        );
+
     }
 
 }
