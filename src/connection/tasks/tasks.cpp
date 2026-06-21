@@ -10,6 +10,7 @@
 
 #include "app/globals/semaphore/semaphore.hpp"
 #include "app/globals/events/events.hpp"
+#include "app/globals/queue/queue.hpp"
 
 #include "connection/mqtt/mqtt.hpp"
 #include "app/env.hpp" 
@@ -18,6 +19,53 @@ using namespace app::globals;
 using namespace connection;
 
 namespace connection::tasks {
+
+    void publish_answer(void* pvParameters) {
+
+        PubSubClient* client = mqtt::get_client();
+
+        char answer;
+        char payload[2];
+
+        while (true) {
+
+            xEventGroupWaitBits(
+                events::get_system_events(),
+                IS_CONNECTED_BITS,
+                pdFALSE,
+                pdTRUE,
+                portMAX_DELAY
+            );
+
+            xEventGroupWaitBits(
+                events::get_karoonte_events(),
+                IS_GAME_STARTED,
+                pdFALSE, 
+                pdTRUE,
+                portMAX_DELAY
+            );
+
+            xQueueReceive(
+                queue::get_answer_queue(),
+                &answer,
+                portMAX_DELAY
+            );
+
+            Serial.printf("[CONN] Publish answer: %c\n", answer);
+
+            snprintf(payload, sizeof(payload), "%c", answer);
+
+            xSemaphoreTake(
+                semaphore::get_wifi_mutex(), 
+                portMAX_DELAY
+            );
+
+            client->publish(MQTT_ANSWER_TOPIC, payload);
+
+            xSemaphoreGive(semaphore::get_wifi_mutex());
+
+        }
+    }
 
     void keep_subscription(void* pvParameters) {
 

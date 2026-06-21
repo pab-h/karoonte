@@ -13,6 +13,15 @@ namespace connection {
         mqtt::init();
 
         xTaskCreate(
+            tasks::publish_answer,
+            "Keep wifi alive",
+            4096,
+            NULL,
+            1,
+            NULL
+        );
+
+        xTaskCreate(
             tasks::keep_wifi_alive,
             "Keep wifi alive",
             4096,
