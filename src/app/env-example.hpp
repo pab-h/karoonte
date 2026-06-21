@@ -8,3 +8,7 @@
 #define MQTT_PORT         1883
 #define MQTT_TOPIC_PREFIX "karoonte"
 #define MQTT_CLIENT_ID    "aladdin"
+
+#define MQTT_ANSWER_TOPIC MQTT_TOPIC_PREFIX "/" MQTT_CLIENT_ID "/" "answer"
+#define MQTT_RESULT_TOPIC MQTT_TOPIC_PREFIX "/" MQTT_CLIENT_ID "/" "result"
+#define MQTT_STATUS_TOPIC MQTT_TOPIC_PREFIX "/" "status"
