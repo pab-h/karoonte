@@ -4,8 +4,10 @@
 
 #include "app/globals/semaphore/semaphore.hpp"
 #include "app/globals/events/events.hpp"
+#include "app/globals/queue/queue.hpp"
 
 #include "connection/init/init.hpp"
+#include "keyboard/init/init.hpp"
 
 namespace app {
 
@@ -13,10 +15,17 @@ namespace app {
 
         Serial.begin(115200);
 
+        globals::queue::init();
         globals::semaphore::init();
         globals::events::init();
 
+        xEventGroupSetBits(
+            globals::events::get_karoonte_events(),
+            IS_GAME_STARTED
+        );
+
         connection::init();
+        keyboard::init();
 
     }
 
