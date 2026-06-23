@@ -12,9 +12,36 @@ namespace connection::mqtt {
 
     static WiFiClient   wifi_client;
     static PubSubClient mqtt_client(wifi_client);
+    
+    static char payload[16];
 
-    void topic_callback(char* topic, uint8_t* payload, uint length) {
+    void subscriber_callback(char* topic, byte* buffer, unsigned int length) {
         
+        memcpy(payload, buffer, length);
+        payload[length] = '\0';
+
+        if (strcmp(topic, MQTT_STATUS_TOPIC) == 0) {
+
+            if (strcmp(payload, "START") == 0) {
+
+                xEventGroupSetBits(
+                    events::get_karoonte_events(),
+                    IS_GAME_STARTED
+                );
+
+            } 
+            
+            if (strcmp(payload, "TIMEOUT") == 0) {
+
+                xEventGroupClearBits(
+                    events::get_karoonte_events(),
+                    IS_GAME_STARTED
+                );
+
+            }
+
+        }
+
     }
 
     PubSubClient* get_client() {
@@ -24,7 +51,7 @@ namespace connection::mqtt {
     void init() {
 
         mqtt_client.setServer(MQTT_HOST, MQTT_PORT);
-        mqtt_client.setCallback(topic_callback);
+        mqtt_client.setCallback(subscriber_callback);
 
         xEventGroupSetBits(
             events::get_system_events(),
