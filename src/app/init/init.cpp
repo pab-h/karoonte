@@ -8,6 +8,7 @@
 
 #include "connection/init/init.hpp"
 #include "keyboard/init/init.hpp"
+#include "music/init/init.hpp"
 
 namespace app {
 
@@ -19,13 +20,9 @@ namespace app {
         globals::semaphore::init();
         globals::events::init();
 
-        xEventGroupSetBits(
-            globals::events::get_karoonte_events(),
-            IS_GAME_STARTED
-        );
-
         connection::init();
         keyboard::init();
+        music::init();
 
     }
 

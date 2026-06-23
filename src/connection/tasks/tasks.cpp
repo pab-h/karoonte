@@ -37,14 +37,6 @@ namespace connection::tasks {
                 portMAX_DELAY
             );
 
-            xEventGroupWaitBits(
-                events::get_karoonte_events(),
-                IS_GAME_STARTED,
-                pdFALSE, 
-                pdTRUE,
-                portMAX_DELAY
-            );
-
             xQueueReceive(
                 queue::get_answer_queue(),
                 &answer,
@@ -87,10 +79,8 @@ namespace connection::tasks {
             );
 
             client->subscribe(MQTT_RESULT_TOPIC);
-            client->subscribe(MQTT_STATUS_TOPIC);
 
             Serial.printf("[CONN] Subscribed on %s\n", MQTT_RESULT_TOPIC);
-            Serial.printf("[CONN] Subscribed on %s\n", MQTT_STATUS_TOPIC);
 
             xSemaphoreGive(
                 semaphore::get_wifi_mutex()
