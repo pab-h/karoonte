@@ -13,7 +13,8 @@
 
 // Karronte events
 
-#define IS_GAME_STARTED BIT0
+#define IS_ANSWER_CORRECT_BIT   BIT0
+#define IS_ANSWER_INCORRECT_BIT BIT1
 
 namespace app::globals::events {
 
